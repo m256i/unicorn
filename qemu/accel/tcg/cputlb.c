@@ -2140,11 +2140,9 @@ store_helper(CPUArchState *env, target_ulong addr, uint64_t val,
         if (unlikely(need_swap)) {
             store_memop(haddr, val, op ^ MO_BSWAP);
             goto _out;
-        } else {
-            store_memop(haddr, val, op);
-            goto _out;
-        }
-        return;
+        } 
+        store_memop(haddr, val, op);
+        goto _out;
     }
 
     /* Handle slow unaligned access (it spans two pages or IO).  */
