@@ -2117,7 +2117,7 @@ store_helper(CPUArchState *env, target_ulong addr, uint64_t val,
         if (tlb_addr & TLB_MMIO) {
             io_writex(env, iotlbentry, mmu_idx, val, addr, retaddr,
                       op ^ (need_swap * MO_BSWAP));
-            return;
+            goto _out; // maybe idfk
         }
 
         /* Ignore writes to ROM.  */
@@ -2139,8 +2139,10 @@ store_helper(CPUArchState *env, target_ulong addr, uint64_t val,
          */
         if (unlikely(need_swap)) {
             store_memop(haddr, val, op ^ MO_BSWAP);
+            goto _out;
         } else {
             store_memop(haddr, val, op);
+            goto _out;
         }
         return;
     }
@@ -2211,12 +2213,37 @@ store_helper(CPUArchState *env, target_ulong addr, uint64_t val,
             helper_ret_stb_mmu(env, addr + i, val8, oi, retaddr);
         }
         uc->size_recur_mem = old_size;
-        return;
+        goto _out;
     }
 
     haddr = (void *)((uintptr_t)addr + entry->addend);
     store_memop(haddr, val, op);
+
+_out:
+
+    // Unicorn: callback on successful data write
+    if (!uc->size_recur_mem &&
+        haddr) { // disabling read callback if in recursive
+                               // call
+        HOOK_FOREACH(uc, hook, UC_HOOK_MEM_WRITE_AFTER)
+        {
+            if (hook->to_delete)
+                continue;
+            if (!HOOK_BOUND_CHECK(hook, addr))
+                continue;
+            ((uc_cb_hookmem_t)hook->callback)(env->uc,
+                                              UC_MEM_WRITE_AFTER,
+                                              addr, size, (int64_t)val,
+                                              hook->user_data);
+
+            // the last callback may already asked to stop emulation
+            if (uc->stop_request)
+                break;
+        }
+    }
 }
+
+// EDITET HERE ^^^
 
 void helper_ret_stb_mmu(CPUArchState *env, target_ulong addr, uint8_t val,
                         TCGMemOpIdx oi, uintptr_t retaddr)

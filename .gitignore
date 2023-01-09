@@ -89,3 +89,4 @@ rust_build
 [Oo]bj/
 packages/
 cmocka/
+/msvc_build_x86

@@ -306,6 +306,7 @@ typedef enum uc_mem_type {
     UC_MEM_READ_PROT,      // Read from read protected, but mapped, memory
     UC_MEM_FETCH_PROT,     // Fetch from non-executable, but mapped, memory
     UC_MEM_READ_AFTER,     // Memory is read from (successful access)
+    UC_MEM_WRITE_AFTER,    // Memory is written to (successful access)
 } uc_mem_type;
 
 // These are all op codes we support to hook for UC_HOOK_TCG_OP_CODE.
@@ -358,17 +359,20 @@ typedef enum uc_hook_type {
     // Hook memory read events, but only successful access.
     // The callback will be triggered after successful read.
     UC_HOOK_MEM_READ_AFTER = 1 << 13,
+    // Hook memory read events, but only successful write.
+    // The callback will be triggered after successful write.
+    UC_HOOK_MEM_WRITE_AFTER = 1 << 14,
     // Hook invalid instructions exceptions.
-    UC_HOOK_INSN_INVALID = 1 << 14,
+    UC_HOOK_INSN_INVALID = 1 << 15,
     // Hook on new edge generation. Could be useful in program analysis.
     //
     // NOTE: This is different from UC_HOOK_BLOCK in 2 ways:
     //       1. The hook is called before executing code.
     //       2. The hook is only called when generation is triggered.
-    UC_HOOK_EDGE_GENERATED = 1 << 15,
+    UC_HOOK_EDGE_GENERATED = 1 << 16,
     // Hook on specific tcg op code. The usage of this hook is similar to
     // UC_HOOK_INSN.
-    UC_HOOK_TCG_OPCODE = 1 << 16,
+    UC_HOOK_TCG_OPCODE = 1 << 17,
 } uc_hook_type;
 
 // Hook type for all events of unmapped memory access
